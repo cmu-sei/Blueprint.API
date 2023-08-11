@@ -3,6 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Principal;
@@ -10,6 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using CsvHelper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Blueprint.Api.Data;
@@ -29,6 +33,7 @@ namespace Blueprint.Api.Services
         Task<ViewModels.User> CreateAsync(ViewModels.User user, CancellationToken ct);
         Task<ViewModels.User> UpdateAsync(Guid id, ViewModels.User user, CancellationToken ct);
         Task<bool> DeleteAsync(Guid id, CancellationToken ct);
+        Task<bool> ImportUsersAsync(FileForm form, CancellationToken ct);
     }
 
     public class UserService : IUserService
@@ -152,6 +157,36 @@ namespace Blueprint.Api.Services
             return true;
         }
 
+        public async Task<bool> ImportUsersAsync(FileForm form, CancellationToken ct)
+        {
+            var noProblems = true;
+            // user must be a Content Developer
+            if (!(await _authorizationService.AuthorizeAsync(_user, null, new ContentDeveloperRequirement())).Succeeded)
+                throw new ForbiddenException();
+
+            var uploadItem = form.ToUpload;
+            using (var reader = new StreamReader(uploadItem.OpenReadStream()))
+            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+            {
+                var newUsers = csv.GetRecords<UserInfo>();
+                foreach (var userInfo in newUsers)
+                {
+                    
+                }
+            }
+            await _context.SaveChangesAsync(ct);
+
+            return noProblems;
+        }
+
+    }
+
+    public class UserInfo
+    {
+        public string Lastname { get; set; }
+        public string Firstname { get; set; }
+        public string Email { get; set; }
+        public string TeamName { get; set; }
     }
 }
 

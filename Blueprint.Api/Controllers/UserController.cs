@@ -150,6 +150,19 @@ namespace Blueprint.Api.Controllers
             return NoContent();
         }
 
+        /// <summary> Import users via file upload </summary>
+        /// <remarks> File objects will be returned in the same order as their respective files within the form. </remarks>
+        /// <param name="form"> The files to upload and their settings </param>
+        /// <param name="ct"></param>
+        [HttpPost("users/import")]
+        [ProducesResponseType((int)HttpStatusCode.OK)]
+        [SwaggerOperation(OperationId = "importUsers")]
+        public async Task<IActionResult> ImportUsersAsync([FromForm] FileForm form, CancellationToken ct)
+        {
+            var result = await _userService.ImportAsync(form, ct);
+            return Ok(result);
+        }
+
 
     }
 }
